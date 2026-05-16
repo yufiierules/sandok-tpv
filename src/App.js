@@ -371,7 +371,7 @@ export default function App() {
           <button key={c} onClick={() => setCat(c)} style={{ background: cat === c ? B.mustard : B.dark, border: `1px solid ${cat === c ? B.mustard : B.mid}`, borderRadius: 20, padding: '7px 16px', color: cat === c ? B.black : B.muted, cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, touchAction: 'manipulation' }}>{c}</button>
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: fullWidth ? 'repeat(auto-fill, minmax(110px, 1fr))' : 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8, overflowY: 'auto', flex: 1, paddingBottom: fullWidth ? 90 : 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: fullWidth ? 'repeat(auto-fill, minmax(110px, 1fr))' : 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8, overflowY: 'auto', flex: 1, paddingBottom: fullWidth ? 80 : 12, WebkitOverflowScrolling: 'touch' }}>
         {filtered.map(p => (
           <button key={p.id} onClick={() => addItem(p)} style={{ background: B.dark, border: `1px solid ${B.mid}`, borderRadius: 12, padding: '14px 8px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, color: B.white, fontFamily: 'inherit', touchAction: 'manipulation' }}>
             <span style={{ fontSize: 30 }}>{p.emoji}</span>
@@ -385,40 +385,59 @@ export default function App() {
 
   // ── TICKET PANEL ─────────────────────────────────────────────────────────────
   const TicketPanel = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `1px solid ${B.mid}` }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `1px solid ${B.mid}`, flexShrink: 0 }}>
         <span style={{ fontWeight: 900, fontSize: 17 }}>🧾 Ticket</span>
         {ticket.length > 0 && <button onClick={clear} style={{ background: 'none', border: `1px solid ${B.red}`, color: B.red, borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}>Limpiar</button>}
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+
+      {/* Lista items — con padding bottom para que no quede tapado por el botón fijo */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0', paddingBottom: isMobile ? 140 : 8, WebkitOverflowScrolling: 'touch' }}>
         {ticket.length === 0 ? (
           <div style={{ color: B.muted, textAlign: 'center', marginTop: 50, fontSize: 13, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 36 }}>🥪</span>Selecciona productos
+            <span style={{ fontSize: 36 }}>🥪</span>Selecciona productos del catálogo
           </div>
         ) : ticket.map(item => (
-          <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderBottom: `1px solid ${B.dark}` }}>
+          <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${B.dark}` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-              <span style={{ fontSize: 20, flexShrink: 0 }}>{item.emoji}</span>
+              <span style={{ fontSize: 22, flexShrink: 0 }}>{item.emoji}</span>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
-                <div style={{ fontSize: 11, color: B.muted }}>{fmt(item.price)}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+                <div style={{ fontSize: 12, color: B.muted }}>{fmt(item.price)} / ud</div>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-              <button onClick={() => chgQty(item.id, -1)} style={{ width: 28, height: 28, borderRadius: 7, background: B.mid, border: 'none', color: B.white, cursor: 'pointer', fontSize: 16, fontWeight: 900, fontFamily: 'inherit', touchAction: 'manipulation' }}>−</button>
-              <span style={{ fontSize: 14, fontWeight: 800, minWidth: 20, textAlign: 'center' }}>{item.qty}</span>
-              <button onClick={() => chgQty(item.id, 1)} style={{ width: 28, height: 28, borderRadius: 7, background: B.mustard, border: 'none', color: B.black, cursor: 'pointer', fontSize: 16, fontWeight: 900, fontFamily: 'inherit', touchAction: 'manipulation' }}>+</button>
-              <span style={{ fontSize: 12, fontWeight: 800, color: B.mustard, minWidth: 52, textAlign: 'right' }}>{fmt(Number(item.price) * item.qty)}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              <button onClick={() => chgQty(item.id, -1)} style={{ width: 32, height: 32, borderRadius: 8, background: B.mid, border: 'none', color: B.white, cursor: 'pointer', fontSize: 18, fontWeight: 900, fontFamily: 'inherit', touchAction: 'manipulation' }}>−</button>
+              <span style={{ fontSize: 15, fontWeight: 800, minWidth: 24, textAlign: 'center' }}>{item.qty}</span>
+              <button onClick={() => chgQty(item.id, 1)} style={{ width: 32, height: 32, borderRadius: 8, background: B.mustard, border: 'none', color: B.black, cursor: 'pointer', fontSize: 18, fontWeight: 900, fontFamily: 'inherit', touchAction: 'manipulation' }}>+</button>
+              <span style={{ fontSize: 13, fontWeight: 800, color: B.mustard, minWidth: 56, textAlign: 'right' }}>{fmt(Number(item.price) * item.qty)}</span>
             </div>
           </div>
         ))}
       </div>
-      <div style={{ padding: 16, borderTop: `2px solid ${B.mustard}` }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+
+      {/* Botón cobrar — fijo en móvil sobre la barra de nav, normal en desktop */}
+      <div style={isMobile ? {
+        position: 'fixed',
+        bottom: 'calc(62px + env(safe-area-inset-bottom))', // justo encima de la barra inferior
+        left: 0, right: 0,
+        background: B.black,
+        borderTop: `2px solid ${B.mustard}`,
+        padding: '12px 16px',
+        zIndex: 99,
+      } : {
+        padding: 16,
+        borderTop: `2px solid ${B.mustard}`,
+        flexShrink: 0,
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <span style={{ color: B.muted, fontSize: 13 }}>{count} artículo{count !== 1 ? 's' : ''}</span>
           <span style={{ fontSize: 26, fontWeight: 900, letterSpacing: -1 }}>{fmt(total)}</span>
         </div>
-        <button onClick={() => { isMobile ? setView('checkout') : setDesktopView('checkout'); }} disabled={!ticket.length} style={{ width: '100%', background: B.mustard, border: 'none', color: B.black, borderRadius: 12, padding: '15px 0', fontSize: 16, fontWeight: 900, cursor: ticket.length ? 'pointer' : 'default', opacity: ticket.length ? 1 : 0.35, fontFamily: 'inherit', touchAction: 'manipulation' }}>
+        <button
+          onClick={() => { isMobile ? setView('checkout') : setDesktopView('checkout'); }}
+          disabled={!ticket.length}
+          style={{ width: '100%', background: B.mustard, border: 'none', color: B.black, borderRadius: 12, padding: '16px 0', fontSize: 17, fontWeight: 900, cursor: ticket.length ? 'pointer' : 'default', opacity: ticket.length ? 1 : 0.35, fontFamily: 'inherit', touchAction: 'manipulation' }}>
           Cobrar {fmt(total)}
         </button>
       </div>
