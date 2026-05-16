@@ -4,14 +4,13 @@ const fmt = (n) => Number(n).toFixed(2).replace('.', ',') + ' €';
 
 // ─── Datos legales del negocio ────────────────────────────────────────────────
 const NEGOCIO = {
-  nombre: 'Carmen Garcia Perez',
-  nif: '17479654-E',
+  nombre: 'SandoK Écija',
   nombreComercial: 'SandoK',
   direccion: 'Av. Miguel de Cervantes, 13',
   cp: '41400',
   ciudad: 'Écija (Sevilla)',
   actividad: 'Restauración y hostelería',
-  iva: 10, // % IVA aplicable a hostelería
+  iva: 10,
 };
 
 export default function Ticket({ sale, onClose }) {
@@ -67,7 +66,6 @@ function TicketBody({ sale }) {
         {/* Datos fiscales obligatorios */}
         <div style={ts.legalBlock}>
           <div style={ts.legalLine}>{NEGOCIO.nombre}</div>
-          <div style={ts.legalLine}>NIF: {NEGOCIO.nif}</div>
           <div style={ts.legalLine}>{NEGOCIO.direccion}</div>
           <div style={ts.legalLine}>{NEGOCIO.cp} {NEGOCIO.ciudad}</div>
         </div>
