@@ -517,15 +517,11 @@ export default function App() {
       <div style={rootStyle}>
         <Notif />
         {printSale && <Ticket sale={printSale} onClose={() => setPrintSale(null)} />}
-        <header style={headerStyle}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <header className="app-header" style={{ ...headerStyle, height: 'auto', minHeight: 54, paddingTop: 0, paddingBottom: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, height: 54, paddingLeft: 14 }}>
             {logoBar}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 13, color: B.mustard, fontWeight: 900, background: B.dark, padding: '4px 10px', borderRadius: 20 }}>{time}</span>
-            <button onClick={handleLogout} style={{ background: 'none', border: `1px solid ${B.red}`, color: B.red, padding: '5px 10px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}>Salir</button>
-          </div>
-        </header>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, height: 54, paddingRight: 14 }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {view === 'catalog' && <CatalogContent fullWidth />}
           {view === 'ticket' && <TicketContent />}
