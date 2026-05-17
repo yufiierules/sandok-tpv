@@ -33,6 +33,21 @@ function BarcodeScanner({ onDetected, onClose }) {
 
     const start = async () => {
       try {
+        setStatus('Solicitando permiso de cámara...');
+
+        // Primero pedir permiso explícitamente al navegador
+        let stream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' } }
+          });
+          // Detener el stream — ZXing abrirá el suyo propio
+          stream.getTracks().forEach(t => t.stop());
+        } catch (permErr) {
+          setError('No se pudo acceder a la cámara. Ve a Ajustes del navegador y permite el acceso a la cámara para esta web.');
+          return;
+        }
+
         setStatus('Cargando escáner...');
         const ZXing = await loadZXing();
 
@@ -70,7 +85,7 @@ function BarcodeScanner({ onDetected, onClose }) {
         ) || devices[devices.length - 1] || devices[0];
 
         if (!backCamera) {
-          setError('No se encontró ninguna cámara');
+          setError('No se encontró ninguna cámara en este dispositivo.');
           return;
         }
 
@@ -91,7 +106,13 @@ function BarcodeScanner({ onDetected, onClose }) {
       } catch (e) {
         if (!active) return;
         console.error('Scanner error:', e);
-        setError('No se pudo acceder a la cámara. Verifica los permisos.');
+        if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+          setError('Permiso de cámara denegado. En iOS: Ajustes → Safari → Cámara → Permitir. En Android: toca el candado en la barra de direcciones → Cámara → Permitir.');
+        } else if (e.name === 'NotFoundError') {
+          setError('No se encontró ninguna cámara en este dispositivo.');
+        } else {
+          setError('Error al iniciar la cámara. Inténtalo de nuevo.');
+        }
       }
     };
 
