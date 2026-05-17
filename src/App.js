@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabase';
 import Login from './Login';
 import Ticket from './Ticket';
+import Gastos from './Gastos';
+import Scanner from './Scanner';
 
 const CATEGORIES = ['Todos', 'Sandos', 'Extras', 'Bebidas', 'Menús'];
 const PAYMENT_METHODS = [
@@ -466,7 +468,9 @@ export default function App() {
           <>
             <span style={{ fontSize: 12, color: B.muted, background: B.dark, padding: '5px 10px', borderRadius: 20 }}>👤 {user.username}</span>
             <button style={{ background: desktopView === 'pos' ? B.mustard : 'none', border: `1px solid ${desktopView === 'pos' ? B.mustard : B.mid}`, color: desktopView === 'pos' ? B.black : B.muted, padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: desktopView === 'pos' ? 800 : 600, fontFamily: 'inherit' }} onClick={() => setDesktopView('pos')}>🏠 Venta</button>
+            <button style={{ background: desktopView === 'scanner' ? B.mustard : 'none', border: `1px solid ${desktopView === 'scanner' ? B.mustard : B.mid}`, color: desktopView === 'scanner' ? B.black : B.muted, padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: desktopView === 'scanner' ? 800 : 600, fontFamily: 'inherit' }} onClick={() => setDesktopView('scanner')}>📷 Escáner</button>
             <button style={{ background: desktopView === 'history' ? B.mustard : 'none', border: `1px solid ${desktopView === 'history' ? B.mustard : B.mid}`, color: desktopView === 'history' ? B.black : B.muted, padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: desktopView === 'history' ? 800 : 600, fontFamily: 'inherit' }} onClick={() => { setDesktopView('history'); loadSales(); }}>📋 Historial{todaySales.length > 0 ? ` (${todaySales.length})` : ''}</button>
+            {user.role === 'admin' && <button style={{ background: desktopView === 'cuentas' ? B.mustard : 'none', border: `1px solid ${desktopView === 'cuentas' ? B.mustard : B.mid}`, color: desktopView === 'cuentas' ? B.black : B.muted, padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: desktopView === 'cuentas' ? 800 : 600, fontFamily: 'inherit' }} onClick={() => setDesktopView('cuentas')}>💰 Cuentas</button>}
             {user.role === 'admin' && <button style={{ background: desktopView === 'manage' ? B.mustard : 'none', border: `1px solid ${desktopView === 'manage' ? B.mustard : B.mid}`, color: desktopView === 'manage' ? B.black : B.muted, padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: desktopView === 'manage' ? 800 : 600, fontFamily: 'inherit' }} onClick={() => setDesktopView('manage')}>⚙️ Productos</button>}
           </>
         )}
@@ -480,8 +484,12 @@ export default function App() {
     const tabs = [
       { id: 'catalog', icon: '🏠', label: 'Venta' },
       { id: 'ticket', icon: '🧾', label: `Ticket${count > 0 ? ` (${count})` : ''}` },
+      { id: 'scanner', icon: '📷', label: 'Escáner' },
       { id: 'history', icon: '📋', label: 'Historial' },
-      ...(user.role === 'admin' ? [{ id: 'manage', icon: '⚙️', label: 'Productos' }] : []),
+      ...(user.role === 'admin' ? [
+        { id: 'cuentas', icon: '💰', label: 'Cuentas' },
+        { id: 'manage', icon: '⚙️', label: 'Productos' },
+      ] : []),
     ];
     return (
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: B.black, borderTop: `2px solid ${B.mustard}`, display: 'flex', zIndex: 100, paddingBottom: 'env(safe-area-inset-bottom)' }}>
@@ -512,6 +520,8 @@ export default function App() {
           {view === 'ticket' && <TicketPanel />}
           {view === 'checkout' && <CheckoutView />}
           {view === 'history' && <HistoryView />}
+          {view === 'scanner' && <Scanner onAddToTicket={(p) => { addItem(p); setView('ticket'); }} />}
+          {view === 'cuentas' && user.role === 'admin' && <Gastos sales={sales} />}
           {view === 'manage' && user.role === 'admin' && <ManageView />}
         </div>
         {view !== 'checkout' && <MobileBottomBar />}
@@ -542,7 +552,9 @@ export default function App() {
           <CheckoutView />
         </div>
       )}
+      {desktopView === 'scanner' && <Scanner onAddToTicket={(p) => { addItem(p); setDesktopView('pos'); }} />}
       {desktopView === 'history' && <HistoryView />}
+      {desktopView === 'cuentas' && user.role === 'admin' && <Gastos sales={sales} />}
       {desktopView === 'manage' && user.role === 'admin' && <ManageView />}
     </div>
   );
