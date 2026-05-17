@@ -4,8 +4,9 @@ import Login from './Login';
 import Ticket from './Ticket';
 import Gastos from './Gastos';
 import Scanner from './Scanner';
+import Usuarios from './Usuarios';
+import Categorias from './Categorias';
 
-const CATEGORIES = ['Todos', 'Sandos', 'Extras', 'Bebidas', 'Menús'];
 const PAYMENT_METHODS = [
   { id: 'Efectivo', label: 'Efectivo', icon: '💴' },
   { id: 'Tarjeta', label: 'Tarjeta', icon: '💳' },
@@ -23,13 +24,12 @@ const nowStr = () => new Date().toLocaleTimeString('es-ES', { hour: '2-digit', m
 const todayStr = () => new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
 const dateStr = () => new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-// Hook para detectar si es móvil
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
+    const h = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
   }, []);
   return isMobile;
 }
@@ -63,38 +63,65 @@ function NumPad({ value, onChange }) {
   );
 }
 
-// ─── Modal producto ───────────────────────────────────────────────────────────
-function ProductModal({ data, onSave, onDelete, onClose }) {
+// ─── Modal producto con imagen ────────────────────────────────────────────────
+function ProductModal({ data, onSave, onDelete, onClose, categories }) {
   const [form, setForm] = useState(data);
+  const [uploading, setUploading] = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const isEdit = !!form.id;
-  const cats = ['Sandos', 'Extras', 'Bebidas', 'Menús', 'Otros'];
-  const emojis = ['🥪','🦐','🥩','🥚','🍜','🫛','🥟','🍵','🫧','🍶','💧','🍱','🧃','🍺','🍷','🍰','🎂','🍡','🥗','🍣'];
-  const inp = { width: '100%', background: B.black, border: `1px solid ${B.mid}`, borderRadius: 8, padding: '12px 14px', color: B.white, fontSize: 16, outline: 'none', boxSizing: 'border-box', marginBottom: 14, fontFamily: 'inherit' };
+
+  const handleImage = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    const ext = file.name.split('.').pop();
+    const filename = `product_${Date.now()}.${ext}`;
+    const { data: uploadData, error } = await supabase.storage.from('product-images').upload(filename, file, { upsert: true });
+    if (!error) {
+      const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(filename);
+      set('image_url', urlData.publicUrl);
+    }
+    setUploading(false);
+  };
+
+  const inp = { width: '100%', background: B.black, border: `1px solid ${B.mid}`, borderRadius: 8, padding: '12px 14px', color: B.white, fontSize: 15, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
   const lbl = { display: 'block', fontSize: 10, color: B.mustard, fontWeight: 800, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1.5 };
+
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 2000 }} onClick={onClose}>
-      <div style={{ background: B.offBlack, border: `2px solid ${B.mustard}`, borderRadius: '20px 20px 0 0', padding: 24, width: '100%', maxWidth: 500, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+      <div style={{ background: B.offBlack, border: `2px solid ${B.mustard}`, borderRadius: '20px 20px 0 0', padding: 24, width: '100%', maxWidth: 500, maxHeight: '92vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
         <div style={{ width: 40, height: 4, background: B.mid, borderRadius: 2, margin: '0 auto 20px' }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-          <span style={{ fontSize: 36 }}>{form.emoji || '🥪'}</span>
-          <h3 style={{ fontSize: 18, fontWeight: 900, margin: 0 }}>{isEdit ? 'Editar producto' : 'Nuevo producto'}</h3>
+
+        {/* Preview imagen */}
+        <div style={{ width: 100, height: 100, borderRadius: 12, background: B.dark, border: `2px dashed ${B.mid}`, margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative', cursor: 'pointer' }}
+          onClick={() => document.getElementById('img-upload').click()}>
+          {form.image_url ? <img src={form.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 36 }}>📷</span>}
+          {uploading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: B.mustard, fontSize: 12, fontWeight: 700 }}>Subiendo...</div>}
         </div>
-        <label style={lbl}>Nombre</label>
-        <input style={inp} value={form.name || ''} onChange={e => set('name', e.target.value)} placeholder="Nombre del producto" />
-        <label style={lbl}>Precio (€)</label>
-        <input style={inp} type="number" step="0.01" inputMode="decimal" value={form.price || ''} onChange={e => set('price', parseFloat(e.target.value) || '')} placeholder="0,00" />
-        <label style={lbl}>Categoría</label>
-        <select style={inp} value={form.category || 'Sandos'} onChange={e => set('category', e.target.value)}>
-          {cats.map(c => <option key={c}>{c}</option>)}
-        </select>
-        <label style={lbl}>Emoji</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
-          {emojis.map(e => (
-            <button key={e} onClick={() => set('emoji', e)} style={{ width: 42, height: 42, borderRadius: 8, border: `2px solid ${form.emoji === e ? B.mustard : 'transparent'}`, background: form.emoji === e ? '#2A2200' : B.black, cursor: 'pointer', fontSize: 22 }}>{e}</button>
-          ))}
+        <input id="img-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImage} />
+        <div style={{ textAlign: 'center', fontSize: 12, color: B.muted, marginBottom: 20, cursor: 'pointer' }} onClick={() => document.getElementById('img-upload').click()}>
+          Toca para subir foto
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={lbl}>Nombre</label>
+          <input style={inp} value={form.name || ''} onChange={e => set('name', e.target.value)} placeholder="Nombre del producto" />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+          <div>
+            <label style={lbl}>Precio (€)</label>
+            <input style={inp} type="number" step="0.01" inputMode="decimal" value={form.price || ''} onChange={e => set('price', parseFloat(e.target.value) || '')} placeholder="0,00" />
+          </div>
+          <div>
+            <label style={lbl}>Categoría</label>
+            <select style={inp} value={form.category || ''} onChange={e => set('category', e.target.value)}>
+              <option value="">Sin categoría</option>
+              {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
           {isEdit && <button onClick={() => { if (window.confirm('¿Eliminar?')) onDelete(form.id); }} style={{ background: 'none', border: `1px solid ${B.red}`, color: B.red, borderRadius: 10, padding: '12px 14px', cursor: 'pointer', fontWeight: 700, fontFamily: 'inherit', fontSize: 14 }}>Eliminar</button>}
           <button onClick={onClose} style={{ flex: 1, background: 'none', border: `1px solid ${B.mid}`, borderRadius: 10, color: B.muted, padding: '13px 0', cursor: 'pointer', fontWeight: 700, fontFamily: 'inherit', fontSize: 15 }}>Cancelar</button>
           <button onClick={() => onSave(form)} style={{ flex: 2, background: B.mustard, border: 'none', borderRadius: 10, color: B.black, padding: '13px 0', cursor: 'pointer', fontWeight: 900, fontFamily: 'inherit', fontSize: 15 }}>{isEdit ? 'Guardar' : 'Añadir'}</button>
@@ -109,11 +136,10 @@ export default function App() {
   const isMobile = useIsMobile();
   const [user, setUser] = useState(null);
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [sales, setSales] = useState([]);
   const [ticket, setTicket] = useState([]);
   const [cat, setCat] = useState('Todos');
-  // En móvil: 'catalog' | 'ticket' | 'checkout' | 'history' | 'manage'
-  // En desktop: 'pos' | 'checkout' | 'history' | 'manage'
   const [view, setView] = useState('catalog');
   const [desktopView, setDesktopView] = useState('pos');
   const [payMethod, setPayMethod] = useState('Efectivo');
@@ -130,21 +156,22 @@ export default function App() {
     if (saved) setUser(JSON.parse(saved));
   }, []);
 
-  useEffect(() => {
-    const t = setInterval(() => setTime(nowStr()), 30000);
-    return () => clearInterval(t);
-  }, []);
+  useEffect(() => { const t = setInterval(() => setTime(nowStr()), 30000); return () => clearInterval(t); }, []);
 
   useEffect(() => {
     if (!user) return;
-    loadProducts();
-    loadSales();
+    loadProducts(); loadSales(); loadCategories();
   }, [user]);
 
   const loadProducts = async () => {
     const { data } = await supabase.from('tpv_products').select('*').eq('active', true).order('id');
     if (data) setProducts(data);
     setLoading(false);
+  };
+
+  const loadCategories = async () => {
+    const { data } = await supabase.from('tpv_categories').select('*').order('id');
+    if (data) setCategories(data);
   };
 
   const loadSales = async () => {
@@ -154,34 +181,19 @@ export default function App() {
 
   useEffect(() => {
     if (!user) return;
-    const channel = supabase.channel('sales-realtime')
+    const channel = supabase.channel('sales-rt')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tpv_sales' }, (payload) => {
         setSales(prev => [payload.new, ...prev.filter(s => s.id !== payload.new.id)]);
       }).subscribe();
     return () => supabase.removeChannel(channel);
   }, [user]);
 
-  const notify = useCallback((msg, type = 'ok') => {
-    setNotif({ msg, type });
-    setTimeout(() => setNotif(null), 2200);
-  }, []);
-
-  const handleLogin = (userData) => {
-    setUser(userData);
-    sessionStorage.setItem('sandok_user', JSON.stringify(userData));
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    sessionStorage.removeItem('sandok_user');
-    setTicket([]);
-  };
+  const notify = useCallback((msg, type = 'ok') => { setNotif({ msg, type }); setTimeout(() => setNotif(null), 2200); }, []);
+  const handleLogin = (u) => { setUser(u); sessionStorage.setItem('sandok_user', JSON.stringify(u)); };
+  const handleLogout = () => { setUser(null); sessionStorage.removeItem('sandok_user'); setTicket([]); };
 
   const addItem = (p) => {
-    setTicket(prev => {
-      const ex = prev.find(i => i.id === p.id);
-      return ex ? prev.map(i => i.id === p.id ? { ...i, qty: i.qty + 1 } : i) : [...prev, { ...p, qty: 1 }];
-    });
+    setTicket(prev => { const ex = prev.find(i => i.id === p.id); return ex ? prev.map(i => i.id === p.id ? { ...i, qty: i.qty + 1 } : i) : [...prev, { ...p, qty: 1 }]; });
     if (isMobile) notify(`+ ${p.name}`);
   };
   const chgQty = (id, d) => setTicket(prev => prev.map(i => i.id === id ? { ...i, qty: i.qty + d } : i).filter(i => i.qty > 0));
@@ -213,13 +225,14 @@ export default function App() {
 
   const saveProduct = async (d) => {
     if (!d.name || !d.price) return;
+    const payload = { name: d.name, price: d.price, category: d.category, image_url: d.image_url || null };
     if (d.id) {
-      const { error } = await supabase.from('tpv_products').update({ name: d.name, price: d.price, category: d.category, emoji: d.emoji }).eq('id', d.id);
-      if (!error) { setProducts(prev => prev.map(p => p.id === d.id ? { ...p, ...d } : p)); notify('Actualizado'); }
+      const { error } = await supabase.from('tpv_products').update(payload).eq('id', d.id);
+      if (!error) { setProducts(prev => prev.map(p => p.id === d.id ? { ...p, ...payload } : p)); notify('Actualizado'); }
     } else {
       const newId = Date.now();
-      const { error } = await supabase.from('tpv_products').insert([{ id: newId, name: d.name, price: d.price, category: d.category, emoji: d.emoji || '🥪' }]);
-      if (!error) { setProducts(prev => [...prev, { id: newId, ...d }]); notify('Añadido'); }
+      const { error } = await supabase.from('tpv_products').insert([{ id: newId, ...payload, active: true }]);
+      if (!error) { setProducts(prev => [...prev, { id: newId, ...payload, active: true }]); notify('Añadido'); }
     }
     setModal(null);
   };
@@ -230,6 +243,7 @@ export default function App() {
     notify('Eliminado', 'warn'); setModal(null);
   };
 
+  const allCats = ['Todos', ...categories.map(c => c.name)];
   const filtered = products.filter(p => (cat === 'Todos' || p.category === cat) && (!search || p.name.toLowerCase().includes(search.toLowerCase())));
   const todaySales = sales.filter(s => s.date === dateStr());
   const todayTotal = todaySales.reduce((s, x) => s + Number(x.total), 0);
@@ -246,7 +260,23 @@ export default function App() {
     </div>
   );
 
-  // ── COBRO (compartido móvil y desktop) ──────────────────────────────────────
+  // ── Producto card — cuadrado fijo ────────────────────────────────────────────
+  const ProductCard = ({ p }) => (
+    <button onClick={() => addItem(p)}
+      style={{ background: B.dark, border: `1px solid ${B.mid}`, borderRadius: 14, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', color: B.white, fontFamily: 'inherit', touchAction: 'manipulation', width: 130, height: 150, flexShrink: 0, overflow: 'hidden', padding: 0 }}>
+      <div style={{ width: '100%', height: 85, background: B.mid, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '14px 14px 0 0' }}>
+        {p.image_url
+          ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <span style={{ fontSize: 36 }}>🥪</span>}
+      </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '6px 8px', width: '100%', boxSizing: 'border-box' }}>
+        <span style={{ fontSize: 12, fontWeight: 700, textAlign: 'center', lineHeight: 1.2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: 2 }}>{p.name}</span>
+        <span style={{ fontSize: 13, color: B.mustard, fontWeight: 900 }}>{fmt(p.price)}</span>
+      </div>
+    </button>
+  );
+
+  // ── CheckoutView ─────────────────────────────────────────────────────────────
   const CheckoutView = () => (
     <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px 16px 100px' : 24, display: 'flex', flexDirection: 'column', gap: 16, maxWidth: isMobile ? '100%' : 500, margin: '0 auto', width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -256,12 +286,10 @@ export default function App() {
         </div>
         <button onClick={() => { isMobile ? setView('ticket') : setDesktopView('pos'); }} style={{ background: 'none', border: `1px solid ${B.mid}`, borderRadius: 10, color: B.muted, padding: '10px 16px', cursor: 'pointer', fontWeight: 700, fontFamily: 'inherit', fontSize: 14 }}>← Volver</button>
       </div>
-
-      {/* Resumen ticket */}
       <div style={{ background: B.black, borderRadius: 14, padding: '12px 16px' }}>
         {ticket.map(i => (
           <div key={i.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${B.dark}`, fontSize: 14 }}>
-            <span>{i.emoji} {i.name} <span style={{ color: B.muted }}>×{i.qty}</span></span>
+            <span>{i.name} <span style={{ color: B.muted }}>×{i.qty}</span></span>
             <span style={{ color: B.mustard, fontWeight: 700 }}>{fmt(Number(i.price) * i.qty)}</span>
           </div>
         ))}
@@ -270,8 +298,6 @@ export default function App() {
           <span style={{ fontWeight: 900, fontSize: 20, color: B.mustard }}>{fmt(total)}</span>
         </div>
       </div>
-
-      {/* Método */}
       <div style={{ display: 'flex', gap: 8 }}>
         {PAYMENT_METHODS.map(m => (
           <button key={m.id} onClick={() => { setPayMethod(m.id); setCash(''); }}
@@ -280,8 +306,6 @@ export default function App() {
           </button>
         ))}
       </div>
-
-      {/* Teclado */}
       {payMethod === 'Efectivo' && (
         <div>
           <NumPad value={cash} onChange={setCash} />
@@ -296,20 +320,18 @@ export default function App() {
           )}
         </div>
       )}
-
       {payMethod !== 'Efectivo' && (
         <div style={{ background: B.dark, border: `1px solid ${B.mid}`, borderRadius: 12, padding: 20, color: B.muted, fontSize: 15, textAlign: 'center' }}>
           {payMethod === 'Tarjeta' ? '💳 Pasa la tarjeta por el datáfono' : '📱 Muestra el QR de Bizum al cliente'}
         </div>
       )}
-
       <button onClick={pay} style={{ width: '100%', background: payMethod === 'Efectivo' && cashNum < total ? B.mid : B.mustard, border: 'none', borderRadius: 14, color: payMethod === 'Efectivo' && cashNum < total ? B.muted : B.black, padding: '17px 0', cursor: 'pointer', fontWeight: 900, fontSize: 18, fontFamily: 'inherit', marginTop: 4 }}>
         ✓ Confirmar cobro
       </button>
     </div>
   );
 
-  // ── HISTORIAL ───────────────────────────────────────────────────────────────
+  // ── HistoryView ──────────────────────────────────────────────────────────────
   const HistoryView = () => (
     <div style={{ flex: 1, padding: isMobile ? '16px 16px 100px' : 24, overflowY: 'auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -341,59 +363,61 @@ export default function App() {
     </div>
   );
 
-  // ── GESTIÓN ─────────────────────────────────────────────────────────────────
+  // ── ManageView ───────────────────────────────────────────────────────────────
   const ManageView = () => (
     <div style={{ flex: 1, padding: isMobile ? '16px 16px 100px' : 24, overflowY: 'auto' }}>
+      {/* Gestión de categorías */}
+      <div style={{ background: B.dark, border: `1px solid ${B.mid}`, borderRadius: 14, padding: 20, marginBottom: 24 }}>
+        <Categorias onCategoriesChange={(cats) => setCategories(cats)} />
+      </div>
+
+      {/* Gestión de productos */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <h2 style={{ fontSize: 20, fontWeight: 900, margin: 0 }}>Productos</h2>
-        <button onClick={() => setModal({ name: '', price: '', category: 'Sandos', emoji: '🥪' })} style={{ background: B.mustard, border: 'none', color: B.black, borderRadius: 10, padding: '10px 18px', cursor: 'pointer', fontWeight: 800, fontSize: 14, fontFamily: 'inherit' }}>+ Nuevo</button>
+        <button onClick={() => setModal({ name: '', price: '', category: categories[0]?.name || '', image_url: null })}
+          style={{ background: B.mustard, border: 'none', color: B.black, borderRadius: 10, padding: '10px 18px', cursor: 'pointer', fontWeight: 800, fontSize: 14, fontFamily: 'inherit' }}>+ Nuevo</button>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {products.map(p => (
-          <div key={p.id} onClick={() => setModal({ ...p })} style={{ background: B.black, border: `1px solid ${B.mid}`, borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }}>
-            <span style={{ fontSize: 28 }}>{p.emoji}</span>
+          <div key={p.id} onClick={() => setModal({ ...p })} style={{ background: B.black, border: `1px solid ${B.mid}`, borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }}>
+            <div style={{ width: 50, height: 50, borderRadius: 10, background: B.dark, overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {p.image_url ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 24 }}>🥪</span>}
+            </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 700, fontSize: 15 }}>{p.name}</div>
-              <div style={{ color: B.muted, fontSize: 12 }}>{p.category}</div>
+              <div style={{ color: B.muted, fontSize: 12 }}>{p.category || 'Sin categoría'}</div>
             </div>
             <div style={{ color: B.mustard, fontWeight: 900, fontSize: 16 }}>{fmt(p.price)}</div>
           </div>
         ))}
       </div>
-      {modal && <ProductModal data={modal} onSave={saveProduct} onDelete={delProduct} onClose={() => setModal(null)} />}
+      {modal && <ProductModal data={modal} onSave={saveProduct} onDelete={delProduct} onClose={() => setModal(null)} categories={categories} />}
     </div>
   );
 
-  // ── CATÁLOGO ─────────────────────────────────────────────────────────────────
+  // ── CatalogPanel ─────────────────────────────────────────────────────────────
   const CatalogPanel = ({ fullWidth }) => (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: fullWidth ? '12px 12px 0' : '16px 16px 0' }}>
       <input style={{ background: B.dark, border: `1px solid ${B.mid}`, borderRadius: 10, padding: '11px 16px', color: B.white, fontSize: 15, outline: 'none', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box', marginBottom: 10 }} placeholder="🔍 Buscar..." value={search} onChange={e => setSearch(e.target.value)} />
       <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 10, scrollbarWidth: 'none' }}>
-        {CATEGORIES.map(c => (
+        {allCats.map(c => (
           <button key={c} onClick={() => setCat(c)} style={{ background: cat === c ? B.mustard : B.dark, border: `1px solid ${cat === c ? B.mustard : B.mid}`, borderRadius: 20, padding: '7px 16px', color: cat === c ? B.black : B.muted, cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, touchAction: 'manipulation' }}>{c}</button>
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: fullWidth ? 'repeat(auto-fill, minmax(110px, 1fr))' : 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8, overflowY: 'auto', flex: 1, paddingBottom: fullWidth ? 80 : 12, WebkitOverflowScrolling: 'touch' }}>
-        {filtered.map(p => (
-          <button key={p.id} onClick={() => addItem(p)} style={{ background: B.dark, border: `1px solid ${B.mid}`, borderRadius: 12, padding: '14px 8px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, color: B.white, fontFamily: 'inherit', touchAction: 'manipulation' }}>
-            <span style={{ fontSize: 30 }}>{p.emoji}</span>
-            <span style={{ fontSize: 12, fontWeight: 700, textAlign: 'center', lineHeight: 1.3 }}>{p.name}</span>
-            <span style={{ fontSize: 14, color: B.mustard, fontWeight: 900 }}>{fmt(p.price)}</span>
-          </button>
-        ))}
+      {/* Grid de productos — cuadrados fijos */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, overflowY: 'auto', flex: 1, paddingBottom: fullWidth ? 90 : 12, alignContent: 'flex-start' }}>
+        {filtered.map(p => <ProductCard key={p.id} p={p} />)}
       </div>
     </div>
   );
 
-  // ── TICKET PANEL ─────────────────────────────────────────────────────────────
+  // ── TicketPanel ──────────────────────────────────────────────────────────────
   const TicketPanel = () => (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', position: 'relative' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `1px solid ${B.mid}`, flexShrink: 0 }}>
         <span style={{ fontWeight: 900, fontSize: 17 }}>🧾 Ticket</span>
         {ticket.length > 0 && <button onClick={clear} style={{ background: 'none', border: `1px solid ${B.red}`, color: B.red, borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}>Limpiar</button>}
       </div>
-
-      {/* Lista items — con padding bottom para que no quede tapado por el botón fijo */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0', paddingBottom: isMobile ? 140 : 8, WebkitOverflowScrolling: 'touch' }}>
         {ticket.length === 0 ? (
           <div style={{ color: B.muted, textAlign: 'center', marginTop: 50, fontSize: 13, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
@@ -402,56 +426,42 @@ export default function App() {
         ) : ticket.map(item => (
           <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${B.dark}` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-              <span style={{ fontSize: 22, flexShrink: 0 }}>{item.emoji}</span>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: B.dark, overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {item.image_url ? <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 18 }}>🥪</span>}
+              </div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
-                <div style={{ fontSize: 12, color: B.muted }}>{fmt(item.price)} / ud</div>
+                <div style={{ fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+                <div style={{ fontSize: 11, color: B.muted }}>{fmt(item.price)}</div>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-              <button onClick={() => chgQty(item.id, -1)} style={{ width: 32, height: 32, borderRadius: 8, background: B.mid, border: 'none', color: B.white, cursor: 'pointer', fontSize: 18, fontWeight: 900, fontFamily: 'inherit', touchAction: 'manipulation' }}>−</button>
-              <span style={{ fontSize: 15, fontWeight: 800, minWidth: 24, textAlign: 'center' }}>{item.qty}</span>
-              <button onClick={() => chgQty(item.id, 1)} style={{ width: 32, height: 32, borderRadius: 8, background: B.mustard, border: 'none', color: B.black, cursor: 'pointer', fontSize: 18, fontWeight: 900, fontFamily: 'inherit', touchAction: 'manipulation' }}>+</button>
-              <span style={{ fontSize: 13, fontWeight: 800, color: B.mustard, minWidth: 56, textAlign: 'right' }}>{fmt(Number(item.price) * item.qty)}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+              <button onClick={() => chgQty(item.id, -1)} style={{ width: 30, height: 30, borderRadius: 8, background: B.mid, border: 'none', color: B.white, cursor: 'pointer', fontSize: 16, fontWeight: 900, fontFamily: 'inherit', touchAction: 'manipulation' }}>−</button>
+              <span style={{ fontSize: 14, fontWeight: 800, minWidth: 22, textAlign: 'center' }}>{item.qty}</span>
+              <button onClick={() => chgQty(item.id, 1)} style={{ width: 30, height: 30, borderRadius: 8, background: B.mustard, border: 'none', color: B.black, cursor: 'pointer', fontSize: 16, fontWeight: 900, fontFamily: 'inherit', touchAction: 'manipulation' }}>+</button>
+              <span style={{ fontSize: 12, fontWeight: 800, color: B.mustard, minWidth: 54, textAlign: 'right' }}>{fmt(Number(item.price) * item.qty)}</span>
             </div>
           </div>
         ))}
       </div>
-
-      {/* Botón cobrar — fijo en móvil sobre la barra de nav, normal en desktop */}
-      <div style={isMobile ? {
-        position: 'fixed',
-        bottom: 'calc(62px + env(safe-area-inset-bottom))', // justo encima de la barra inferior
-        left: 0, right: 0,
-        background: B.black,
-        borderTop: `2px solid ${B.mustard}`,
-        padding: '12px 16px',
-        zIndex: 99,
-      } : {
-        padding: 16,
-        borderTop: `2px solid ${B.mustard}`,
-        flexShrink: 0,
-      }}>
+      <div style={isMobile ? { position: 'fixed', bottom: 'calc(62px + env(safe-area-inset-bottom))', left: 0, right: 0, background: B.black, borderTop: `2px solid ${B.mustard}`, padding: '12px 16px', zIndex: 99 } : { padding: 16, borderTop: `2px solid ${B.mustard}`, flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <span style={{ color: B.muted, fontSize: 13 }}>{count} artículo{count !== 1 ? 's' : ''}</span>
           <span style={{ fontSize: 26, fontWeight: 900, letterSpacing: -1 }}>{fmt(total)}</span>
         </div>
-        <button
-          onClick={() => { isMobile ? setView('checkout') : setDesktopView('checkout'); }}
-          disabled={!ticket.length}
-          style={{ width: '100%', background: B.mustard, border: 'none', color: B.black, borderRadius: 12, padding: '16px 0', fontSize: 17, fontWeight: 900, cursor: ticket.length ? 'pointer' : 'default', opacity: ticket.length ? 1 : 0.35, fontFamily: 'inherit', touchAction: 'manipulation' }}>
+        <button onClick={() => { isMobile ? setView('checkout') : setDesktopView('checkout'); }} disabled={!ticket.length}
+          style={{ width: '100%', background: B.mustard, border: 'none', color: B.black, borderRadius: 12, padding: '15px 0', fontSize: 16, fontWeight: 900, cursor: ticket.length ? 'pointer' : 'default', opacity: ticket.length ? 1 : 0.35, fontFamily: 'inherit', touchAction: 'manipulation' }}>
           Cobrar {fmt(total)}
         </button>
       </div>
     </div>
   );
 
-  // ── HEADER ──────────────────────────────────────────────────────────────────
+  // ── Header ───────────────────────────────────────────────────────────────────
   const Header = () => (
     <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '0 14px' : '0 20px', height: isMobile ? 54 : 62, background: B.black, borderBottom: `3px solid ${B.mustard}`, flexShrink: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 16 }}>
         <div style={{ display: 'flex', alignItems: 'baseline' }}>
-          <span style={{ fontSize: isMobile ? 22 : 26, fontWeight: 300, color: B.white, letterSpacing: -0.5 }}>Sand</span>
+          <span style={{ fontSize: isMobile ? 22 : 26, fontWeight: 300, color: B.white }}>Sand</span>
           <span style={{ fontSize: isMobile ? 15 : 18, color: B.red, margin: '0 1px' }}>●</span>
           <span style={{ fontSize: isMobile ? 22 : 26, fontWeight: 900, color: B.white, letterSpacing: -1 }}>K</span>
         </div>
@@ -466,38 +476,49 @@ export default function App() {
         <span style={{ fontSize: isMobile ? 13 : 14, color: B.mustard, fontWeight: 900, background: B.dark, padding: isMobile ? '4px 10px' : '5px 12px', borderRadius: 20, fontVariantNumeric: 'tabular-nums' }}>{time}</span>
         {!isMobile && (
           <>
-            <span style={{ fontSize: 12, color: B.muted, background: B.dark, padding: '5px 10px', borderRadius: 20 }}>👤 {user.username}</span>
-            <button style={{ background: desktopView === 'pos' ? B.mustard : 'none', border: `1px solid ${desktopView === 'pos' ? B.mustard : B.mid}`, color: desktopView === 'pos' ? B.black : B.muted, padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: desktopView === 'pos' ? 800 : 600, fontFamily: 'inherit' }} onClick={() => setDesktopView('pos')}>🏠 Venta</button>
-            <button style={{ background: desktopView === 'scanner' ? B.mustard : 'none', border: `1px solid ${desktopView === 'scanner' ? B.mustard : B.mid}`, color: desktopView === 'scanner' ? B.black : B.muted, padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: desktopView === 'scanner' ? 800 : 600, fontFamily: 'inherit' }} onClick={() => setDesktopView('scanner')}>📷 Escáner</button>
-            <button style={{ background: desktopView === 'history' ? B.mustard : 'none', border: `1px solid ${desktopView === 'history' ? B.mustard : B.mid}`, color: desktopView === 'history' ? B.black : B.muted, padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: desktopView === 'history' ? 800 : 600, fontFamily: 'inherit' }} onClick={() => { setDesktopView('history'); loadSales(); }}>📋 Historial{todaySales.length > 0 ? ` (${todaySales.length})` : ''}</button>
-            {user.role === 'admin' && <button style={{ background: desktopView === 'cuentas' ? B.mustard : 'none', border: `1px solid ${desktopView === 'cuentas' ? B.mustard : B.mid}`, color: desktopView === 'cuentas' ? B.black : B.muted, padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: desktopView === 'cuentas' ? 800 : 600, fontFamily: 'inherit' }} onClick={() => setDesktopView('cuentas')}>💰 Cuentas</button>}
-            {user.role === 'admin' && <button style={{ background: desktopView === 'manage' ? B.mustard : 'none', border: `1px solid ${desktopView === 'manage' ? B.mustard : B.mid}`, color: desktopView === 'manage' ? B.black : B.muted, padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: desktopView === 'manage' ? 800 : 600, fontFamily: 'inherit' }} onClick={() => setDesktopView('manage')}>⚙️ Productos</button>}
+            <span style={{ fontSize: 12, color: B.muted, background: B.dark, padding: '5px 10px', borderRadius: 20 }}>👤 {user.display_name || user.username}</span>
+            {[
+              { id: 'pos', label: '🏠 Venta' },
+              { id: 'scanner', label: '📷 Escáner' },
+              { id: 'history', label: `📋 Historial${todaySales.length > 0 ? ` (${todaySales.length})` : ''}` },
+              ...(user.role === 'admin' ? [
+                { id: 'cuentas', label: '💰 Cuentas' },
+                { id: 'manage', label: '⚙️ Productos' },
+                { id: 'usuarios', label: '👥 Usuarios' },
+              ] : []),
+            ].map(nav => (
+              <button key={nav.id} onClick={() => { setDesktopView(nav.id); if (nav.id === 'history') loadSales(); }}
+                style={{ background: desktopView === nav.id ? B.mustard : 'none', border: `1px solid ${desktopView === nav.id ? B.mustard : B.mid}`, color: desktopView === nav.id ? B.black : B.muted, padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: desktopView === nav.id ? 800 : 600, fontFamily: 'inherit' }}>
+                {nav.label}
+              </button>
+            ))}
           </>
         )}
-        <button onClick={handleLogout} style={{ background: 'none', border: `1px solid ${B.red}`, color: B.red, padding: isMobile ? '5px 10px' : '7px 12px', borderRadius: 8, cursor: 'pointer', fontSize: isMobile ? 12 : 12, fontWeight: 700, fontFamily: 'inherit' }}>Salir</button>
+        <button onClick={handleLogout} style={{ background: 'none', border: `1px solid ${B.red}`, color: B.red, padding: isMobile ? '5px 10px' : '7px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}>Salir</button>
       </div>
     </header>
   );
 
-  // ── BARRA INFERIOR MÓVIL ─────────────────────────────────────────────────────
+  // ── Barra inferior móvil ─────────────────────────────────────────────────────
   const MobileBottomBar = () => {
     const tabs = [
       { id: 'catalog', icon: '🏠', label: 'Venta' },
-      { id: 'ticket', icon: '🧾', label: `Ticket${count > 0 ? ` (${count})` : ''}` },
+      { id: 'ticket', icon: '🧾', label: count > 0 ? `(${count})` : 'Ticket' },
       { id: 'scanner', icon: '📷', label: 'Escáner' },
       { id: 'history', icon: '📋', label: 'Historial' },
       ...(user.role === 'admin' ? [
         { id: 'cuentas', icon: '💰', label: 'Cuentas' },
-        { id: 'manage', icon: '⚙️', label: 'Productos' },
+        { id: 'manage', icon: '⚙️', label: 'Config' },
+        { id: 'usuarios', icon: '👥', label: 'Usuarios' },
       ] : []),
     ];
     return (
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: B.black, borderTop: `2px solid ${B.mustard}`, display: 'flex', zIndex: 100, paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: B.black, borderTop: `2px solid ${B.mustard}`, display: 'flex', zIndex: 100, paddingBottom: 'env(safe-area-inset-bottom)', overflowX: 'auto' }}>
         {tabs.map(tab => (
           <button key={tab.id} onClick={() => { setView(tab.id); if (tab.id === 'history') loadSales(); }}
-            style={{ flex: 1, background: view === tab.id ? '#2A2200' : 'none', border: 'none', color: view === tab.id ? B.mustard : B.muted, padding: '10px 0 8px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, touchAction: 'manipulation', borderTop: view === tab.id ? `2px solid ${B.mustard}` : '2px solid transparent', marginTop: -2 }}>
-            <span style={{ fontSize: 20 }}>{tab.icon}</span>
-            <span style={{ fontSize: 10, fontWeight: 700 }}>{tab.label}</span>
+            style={{ flex: '0 0 auto', minWidth: 60, background: view === tab.id ? '#2A2200' : 'none', border: 'none', color: view === tab.id ? B.mustard : B.muted, padding: '10px 0 8px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, touchAction: 'manipulation', borderTop: view === tab.id ? `2px solid ${B.mustard}` : '2px solid transparent', marginTop: -2 }}>
+            <span style={{ fontSize: 18 }}>{tab.icon}</span>
+            <span style={{ fontSize: 9, fontWeight: 700 }}>{tab.label}</span>
           </button>
         ))}
       </div>
@@ -508,14 +529,10 @@ export default function App() {
   if (isMobile) {
     return (
       <div style={{ minHeight: '100vh', background: B.offBlack, color: B.white, fontFamily: "'DM Sans','Helvetica Neue',sans-serif", display: 'flex', flexDirection: 'column' }}>
-        {notif && (
-          <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', padding: '10px 24px', borderRadius: 50, fontWeight: 800, fontSize: 13, zIndex: 9999, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', background: notif.type === 'err' ? B.red : notif.type === 'warn' ? B.mustardDark : B.mustard, color: B.black, whiteSpace: 'nowrap' }}>
-            {notif.msg}
-          </div>
-        )}
+        {notif && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', padding: '10px 24px', borderRadius: 50, fontWeight: 800, fontSize: 13, zIndex: 9999, background: notif.type === 'err' ? B.red : notif.type === 'warn' ? B.mustardDark : B.mustard, color: B.black, whiteSpace: 'nowrap' }}>{notif.msg}</div>}
         {printSale && <Ticket sale={printSale} onClose={() => setPrintSale(null)} />}
         <Header />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {view === 'catalog' && <CatalogPanel fullWidth />}
           {view === 'ticket' && <TicketPanel />}
           {view === 'checkout' && <CheckoutView />}
@@ -523,6 +540,7 @@ export default function App() {
           {view === 'scanner' && <Scanner onAddToTicket={(p) => { addItem(p); setView('ticket'); }} />}
           {view === 'cuentas' && user.role === 'admin' && <Gastos sales={sales} />}
           {view === 'manage' && user.role === 'admin' && <ManageView />}
+          {view === 'usuarios' && user.role === 'admin' && <Usuarios currentUser={user} />}
         </div>
         {view !== 'checkout' && <MobileBottomBar />}
       </div>
@@ -532,11 +550,7 @@ export default function App() {
   // ── RENDER DESKTOP ───────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight: '100vh', background: B.offBlack, color: B.white, fontFamily: "'DM Sans','Helvetica Neue',sans-serif", display: 'flex', flexDirection: 'column' }}>
-      {notif && (
-        <div style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', padding: '12px 28px', borderRadius: 50, fontWeight: 800, fontSize: 14, zIndex: 9999, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', background: notif.type === 'err' ? B.red : notif.type === 'warn' ? B.mustardDark : B.mustard, color: B.black, whiteSpace: 'nowrap' }}>
-          {notif.msg}
-        </div>
-      )}
+      {notif && <div style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', padding: '12px 28px', borderRadius: 50, fontWeight: 800, fontSize: 14, zIndex: 9999, background: notif.type === 'err' ? B.red : notif.type === 'warn' ? B.mustardDark : B.mustard, color: B.black, whiteSpace: 'nowrap' }}>{notif.msg}</div>}
       {printSale && <Ticket sale={printSale} onClose={() => setPrintSale(null)} />}
       <Header />
       {desktopView === 'pos' && (
@@ -547,15 +561,12 @@ export default function App() {
           </div>
         </div>
       )}
-      {desktopView === 'checkout' && (
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
-          <CheckoutView />
-        </div>
-      )}
+      {desktopView === 'checkout' && <div style={{ flex: 1, overflowY: 'auto', display: 'flex', justifyContent: 'center' }}><CheckoutView /></div>}
       {desktopView === 'scanner' && <Scanner onAddToTicket={(p) => { addItem(p); setDesktopView('pos'); }} />}
       {desktopView === 'history' && <HistoryView />}
       {desktopView === 'cuentas' && user.role === 'admin' && <Gastos sales={sales} />}
       {desktopView === 'manage' && user.role === 'admin' && <ManageView />}
+      {desktopView === 'usuarios' && user.role === 'admin' && <Usuarios currentUser={user} />}
     </div>
   );
 }
