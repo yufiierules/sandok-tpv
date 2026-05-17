@@ -356,7 +356,7 @@ export default function App() {
         <span style={{ fontWeight: 900, fontSize: 17 }}>🧾 Ticket</span>
         {ticket.length > 0 && <button onClick={clear} style={{ background: 'none', border: `1px solid ${B.red}`, color: B.red, borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}>Limpiar</button>}
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0', paddingBottom: isMobile ? 140 : 8, WebkitOverflowScrolling: 'touch' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0', paddingBottom: isMobile ? 160 : 8, WebkitOverflowScrolling: 'touch' }}>
         {ticket.length === 0 ? (
           <div style={{ color: B.muted, textAlign: 'center', marginTop: 50, fontSize: 13, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 36 }}>🥪</span>Selecciona productos del catálogo
@@ -381,7 +381,7 @@ export default function App() {
           </div>
         ))}
       </div>
-      <div style={isMobile ? { position: 'fixed', bottom: 0, left: 0, right: 0, background: B.black, borderTop: `2px solid ${B.mustard}`, padding: '12px 16px', paddingBottom: 'calc(max(62px, 62px + env(safe-area-inset-bottom)) + 12px)', zIndex: 99 } : { padding: 16, borderTop: `2px solid ${B.mustard}`, flexShrink: 0 }}>
+      <div className={isMobile ? 'cobrar-bar' : ''} style={isMobile ? {} : { padding: 16, borderTop: `2px solid ${B.mustard}`, flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <span style={{ color: B.muted, fontSize: 13 }}>{count} artículo{count !== 1 ? 's' : ''}</span>
           <span style={{ fontSize: 26, fontWeight: 900, letterSpacing: -1 }}>{fmt(total)}</span>
@@ -537,12 +537,12 @@ export default function App() {
           {view === 'usuarios' && user.role === 'admin' && <Usuarios currentUser={user} />}
         </div>
         {view !== 'checkout' && (
-          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: B.black, borderTop: `2px solid ${B.mustard}`, display: 'flex', zIndex: 100, overflowX: 'auto' }}>
+          <div className="bottom-nav">
             {mobileTabItems.map(tab => (
               <button key={tab.id} onClick={() => { setView(tab.id); if (tab.id === 'history') loadSales(); }}
-                style={{ flex: '0 0 auto', minWidth: 60, background: view === tab.id ? '#2A2200' : 'none', border: 'none', color: view === tab.id ? B.mustard : B.muted, padding: '10px 0', paddingBottom: 'max(10px, env(safe-area-inset-bottom))', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, touchAction: 'manipulation', borderTop: view === tab.id ? `2px solid ${B.mustard}` : '2px solid transparent', marginTop: -2 }}>
-                <span style={{ fontSize: 20 }}>{tab.icon}</span>
-                <span style={{ fontSize: 9, fontWeight: 700 }}>{tab.label}</span>
+                className={`bottom-nav-btn${view === tab.id ? ' active' : ''}`}>
+                <span className="icon">{tab.icon}</span>
+                <span className="label">{tab.label}</span>
               </button>
             ))}
           </div>
