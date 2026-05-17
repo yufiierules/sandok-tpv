@@ -522,6 +522,10 @@ export default function App() {
             {logoBar}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, height: 54, paddingRight: 14 }}>
+            <span style={{ fontSize: 13, color: B.mustard, fontWeight: 900, background: B.dark, padding: '4px 10px', borderRadius: 20 }}>{time}</span>
+            <button onClick={handleLogout} style={{ background: 'none', border: `1px solid ${B.red}`, color: B.red, padding: '5px 10px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}>Salir</button>
+          </div>
+        </header>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {view === 'catalog' && <CatalogContent fullWidth />}
           {view === 'ticket' && <TicketContent />}
