@@ -14,11 +14,72 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
     <title>SandoK TPV</title>
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-      body { background: #111111; font-family: 'DM Sans', sans-serif; overscroll-behavior: none; }
-      :root { --sat: env(safe-area-inset-top); --sar: env(safe-area-inset-right); --sab: env(safe-area-inset-bottom); --sal: env(safe-area-inset-left); }
-      @supports (padding-bottom: env(safe-area-inset-bottom)) {
-        body { padding-bottom: 0; }
+      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html, body, #root { width: 100%; height: 100%; }
+      body {
+        background: #111111;
+        font-family: 'DM Sans', sans-serif;
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      /* Safe area variables para iOS y Android */
+      :root {
+        --sab: env(safe-area-inset-bottom, 0px);
+        --sat: env(safe-area-inset-top, 0px);
+      }
+      /* Barra de navegación inferior — siempre por encima del home indicator */
+      .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        background: #111111;
+        border-top: 2px solid #D4A017;
+        display: flex;
+        overflow-x: auto;
+        /* Padding bottom para home indicator de iPhone y Android */
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        padding-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+      }
+      .bottom-nav-btn {
+        flex: 0 0 auto;
+        min-width: 60px;
+        border: none;
+        background: none;
+        color: #777777;
+        padding: 10px 0 10px;
+        cursor: pointer;
+        font-family: inherit;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        -webkit-appearance: none;
+        touch-action: manipulation;
+      }
+      .bottom-nav-btn.active {
+        background: #2A2200;
+        color: #D4A017;
+        border-top: 2px solid #D4A017;
+        margin-top: -2px;
+      }
+      .bottom-nav-btn span.icon { font-size: 20px; line-height: 1; }
+      .bottom-nav-btn span.label { font-size: 9px; font-weight: 700; }
+      /* El contenido principal deja espacio para la barra inferior */
+      .main-content-mobile {
+        padding-bottom: calc(62px + env(safe-area-inset-bottom, 0px));
+      }
+      /* Botón cobrar fijo */
+      .cobrar-bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        background: #111111;
+        border-top: 2px solid #D4A017;
+        padding: 12px 16px;
+        z-index: 99;
+        bottom: calc(62px + env(safe-area-inset-bottom, 0px));
       }
       @media print {
         body * { visibility: hidden; }
