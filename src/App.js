@@ -87,9 +87,10 @@ function ProductModal({ data, onSave, onDelete, onClose, categories }) {
   const inp = { width: '100%', background: B.black, border: `1px solid ${B.mid}`, borderRadius: 8, padding: '12px 14px', color: B.white, fontSize: 15, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
   const lbl = { display: 'block', fontSize: 10, color: B.mustard, fontWeight: 800, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1.5 };
 
+  const isMob = window.innerWidth < 768;
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 2000 }} onClick={onClose}>
-      <div style={{ background: B.offBlack, border: `2px solid ${B.mustard}`, borderRadius: '20px 20px 0 0', padding: 24, width: '100%', maxWidth: 500, maxHeight: '92vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: isMob ? 'flex-end' : 'center', justifyContent: 'center', zIndex: 2000, padding: isMob ? 0 : 20 }} onClick={onClose}>
+      <div style={{ background: B.offBlack, border: `2px solid ${B.mustard}`, borderRadius: isMob ? '20px 20px 0 0' : 20, padding: 24, width: '100%', maxWidth: 500, maxHeight: '92vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
         <div style={{ width: 40, height: 4, background: B.mid, borderRadius: 2, margin: '0 auto 20px' }} />
         <div style={{ width: 100, height: 100, borderRadius: 12, background: B.dark, border: `2px dashed ${B.mid}`, margin: '0 auto 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative', cursor: 'pointer' }}
           onClick={() => document.getElementById('img-upload').click()}>
@@ -380,7 +381,7 @@ export default function App() {
           </div>
         ))}
       </div>
-      <div style={isMobile ? { position: 'fixed', bottom: 'calc(62px + env(safe-area-inset-bottom))', left: 0, right: 0, background: B.black, borderTop: `2px solid ${B.mustard}`, padding: '12px 16px', zIndex: 99 } : { padding: 16, borderTop: `2px solid ${B.mustard}`, flexShrink: 0 }}>
+      <div style={isMobile ? { position: 'fixed', bottom: 0, left: 0, right: 0, background: B.black, borderTop: `2px solid ${B.mustard}`, padding: '12px 16px', paddingBottom: 'calc(max(62px, 62px + env(safe-area-inset-bottom)) + 12px)', zIndex: 99 } : { padding: 16, borderTop: `2px solid ${B.mustard}`, flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <span style={{ color: B.muted, fontSize: 13 }}>{count} artículo{count !== 1 ? 's' : ''}</span>
           <span style={{ fontSize: 26, fontWeight: 900, letterSpacing: -1 }}>{fmt(total)}</span>
@@ -536,11 +537,11 @@ export default function App() {
           {view === 'usuarios' && user.role === 'admin' && <Usuarios currentUser={user} />}
         </div>
         {view !== 'checkout' && (
-          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: B.black, borderTop: `2px solid ${B.mustard}`, display: 'flex', zIndex: 100, paddingBottom: 'env(safe-area-inset-bottom)', overflowX: 'auto' }}>
+          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: B.black, borderTop: `2px solid ${B.mustard}`, display: 'flex', zIndex: 100, overflowX: 'auto' }}>
             {mobileTabItems.map(tab => (
               <button key={tab.id} onClick={() => { setView(tab.id); if (tab.id === 'history') loadSales(); }}
-                style={{ flex: '0 0 auto', minWidth: 60, background: view === tab.id ? '#2A2200' : 'none', border: 'none', color: view === tab.id ? B.mustard : B.muted, padding: '10px 0 8px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, touchAction: 'manipulation', borderTop: view === tab.id ? `2px solid ${B.mustard}` : '2px solid transparent', marginTop: -2 }}>
-                <span style={{ fontSize: 18 }}>{tab.icon}</span>
+                style={{ flex: '0 0 auto', minWidth: 60, background: view === tab.id ? '#2A2200' : 'none', border: 'none', color: view === tab.id ? B.mustard : B.muted, padding: '10px 0', paddingBottom: 'max(10px, env(safe-area-inset-bottom))', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, touchAction: 'manipulation', borderTop: view === tab.id ? `2px solid ${B.mustard}` : '2px solid transparent', marginTop: -2 }}>
+                <span style={{ fontSize: 20 }}>{tab.icon}</span>
                 <span style={{ fontSize: 9, fontWeight: 700 }}>{tab.label}</span>
               </button>
             ))}
