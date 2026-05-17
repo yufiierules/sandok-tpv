@@ -40,7 +40,7 @@ export default function Usuarios({ currentUser }) {
       notify('Usuario actualizado ✓');
     } else {
       const { error } = await supabase.from('tpv_users').insert([{
-        id: `${Date.now()}`, username: form.username.toLowerCase().trim(),
+        id: crypto.randomUUID(), username: form.username.toLowerCase().trim(),
         password_hash: form.password_hash, role: form.role,
         display_name: form.display_name || form.username,
       }]);
