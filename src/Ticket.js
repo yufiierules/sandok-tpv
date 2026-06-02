@@ -4,8 +4,8 @@ const fmt = (n) => Number(n).toFixed(2).replace('.', ',') + ' €';
 
 // ─── Datos legales del negocio ────────────────────────────────────────────────
 const NEGOCIO = {
-  nombre: 'SandoK Écija',
-  nombreComercial: 'SandoK',
+  nombre: 'kono. Écija',
+  nombreComercial: 'kono.',
   direccion: 'Av. Miguel de Cervantes, 13',
   cp: '41400',
   ciudad: 'Écija (Sevilla)',
@@ -53,11 +53,10 @@ function TicketBody({ sale }) {
 
       {/* ── CABECERA LEGAL ── */}
       <div style={ts.header}>
-        {/* Logo */}
+        {/* Logo kono. */}
         <div style={ts.logo}>
-          <span style={ts.logoText}>Sand</span>
-          <span style={ts.logoDot}>●</span>
-          <span style={ts.logoK}>K</span>
+          <span style={ts.logoText}>kono</span>
+          <span style={ts.logoDot} />
         </div>
         <div style={ts.tagline}>JAPANESE GOURMET FRIED SANDWICHES</div>
 
@@ -191,10 +190,9 @@ const ts = {
     fontSize: 12,
   },
   header: { marginBottom: 6 },
-  logo: { display: 'flex', alignItems: 'baseline', justifyContent: 'center', marginBottom: 2 },
-  logoText: { fontSize: 26, fontWeight: 300, fontFamily: "'DM Sans',sans-serif", letterSpacing: -0.5 },
-  logoDot: { fontSize: 18, color: '#CC0000', margin: '0 2px' },
-  logoK: { fontSize: 26, fontWeight: 900, fontFamily: "'DM Sans',sans-serif", letterSpacing: -1 },
+  logo: { display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 0, marginBottom: 2 },
+  logoText: { fontSize: 26, fontWeight: 900, fontFamily: "'DM Sans',sans-serif", letterSpacing: '-0.03em', color: '#111', lineHeight: 1 },
+  logoDot: { display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#E83030', marginLeft: 2, marginBottom: 4, flexShrink: 0 },
   tagline: { textAlign: 'center', fontSize: 7, letterSpacing: 2, color: '#666', marginBottom: 8, fontFamily: "'DM Sans',sans-serif" },
   sep: { fontSize: 11, color: '#bbb', lineHeight: 1.6, letterSpacing: 0 },
   legalBlock: { margin: '8px 0', textAlign: 'center' },
@@ -219,7 +217,7 @@ const ts = {
   footer: { textAlign: 'center', marginTop: 8 },
   footerLine: { fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans',sans-serif", marginBottom: 2 },
   footerSub: { fontSize: 9, color: '#999', lineHeight: 1.5 },
-  redBar: { height: 4, background: '#CC0000', borderRadius: 2, margin: '10px 20px 0' },
+  redBar: { height: 4, background: '#E83030', borderRadius: 2, margin: '10px 20px 0' },
 };
 
 // ─── Estilos overlay ──────────────────────────────────────────────────────────
@@ -227,9 +225,9 @@ const styles = {
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: 16 },
   previewCard: { background: '#1A1A1A', border: '1px solid #333', borderRadius: 20, padding: 24, maxHeight: '95vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 },
   previewHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-  previewTitle: { fontSize: 13, fontWeight: 700, color: '#D4A017', letterSpacing: 1, textTransform: 'uppercase' },
+  previewTitle: { fontSize: 13, fontWeight: 700, color: '#FFB800', letterSpacing: 1, textTransform: 'uppercase' },
   previewActions: { display: 'flex', gap: 10 },
-  printBtn: { background: '#D4A017', border: 'none', color: '#111', borderRadius: 8, padding: '8px 18px', cursor: 'pointer', fontWeight: 800, fontSize: 14, fontFamily: 'inherit' },
+  printBtn: { background: '#FFB800', border: 'none', color: '#111', borderRadius: 8, padding: '8px 18px', cursor: 'pointer', fontWeight: 800, fontSize: 14, fontFamily: 'inherit' },
   closeBtn: { background: 'none', border: '1px solid #444', color: '#888', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontSize: 14, fontFamily: 'inherit' },
   ticketWrap: { display: 'flex', justifyContent: 'center' },
 };
