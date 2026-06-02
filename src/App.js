@@ -84,14 +84,16 @@ function ProductModal({ data, onSave, onDelete, onClose, categories }) {
     setUploading(false);
   };
 
-  const inp = { width: '100%', background: B.black, border: `1px solid ${B.mid}`, borderRadius: 8, padding: '12px 14px', color: B.white, fontSize: 15, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
+  const inp = { width: '100%', background: B.black, border: `1px solid ${B.mid}`, borderRadius: 8, padding: '12px 14px', color: B.white, fontSize: 16, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
   const lbl = { display: 'block', fontSize: 10, color: B.mustard, fontWeight: 800, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1.5 };
 
-  const isMob = window.innerWidth < 768;
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: isMob ? 'flex-end' : 'center', justifyContent: 'center', zIndex: 2000, padding: isMob ? 0 : 20 }} onClick={onClose}>
-      <div style={{ background: B.offBlack, border: `2px solid ${B.mustard}`, borderRadius: isMob ? '20px 20px 0 0' : 20, padding: 24, width: '100%', maxWidth: 500, maxHeight: '92vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-        <div style={{ width: 40, height: 4, background: B.mid, borderRadius: 2, margin: '0 auto 20px' }} />
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 2000, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '20px 0 40px' }} onClick={onClose}>
+      <div style={{ background: B.offBlack, border: `2px solid ${B.mustard}`, borderRadius: 20, padding: 24, width: '100%', maxWidth: 500, margin: 'auto', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <span style={{ fontWeight: 900, fontSize: 16 }}>{isEdit ? 'Editar producto' : 'Nuevo producto'}</span>
+          <button onClick={onClose} style={{ background: 'none', border: '1px solid #444', color: '#888', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 14, fontFamily: 'inherit' }}>✕</button>
+        </div>
         <div style={{ width: 100, height: 100, borderRadius: 12, background: B.dark, border: `2px dashed ${B.mid}`, margin: '0 auto 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative', cursor: 'pointer' }}
           onClick={() => document.getElementById('img-upload').click()}>
           {form.image_url ? <img src={form.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 36 }}>📷</span>}
