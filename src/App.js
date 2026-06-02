@@ -222,7 +222,7 @@ export default function App() {
   const [printSale, setPrintSale] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { const saved = sessionStorage.getItem('sandok_user'); if (saved) setUser(JSON.parse(saved)); }, []);
+  useEffect(() => { const saved = sessionStorage.getItem('kono_user'); if (saved) setUser(JSON.parse(saved)); }, []);
   useEffect(() => { const t = setInterval(() => setTime(nowStr()), 30000); return () => clearInterval(t); }, []);
 
   useEffect(() => {
@@ -254,8 +254,8 @@ export default function App() {
   }, [user]);
 
   const notify = useCallback((msg, type = 'ok') => { setNotif({ msg, type }); setTimeout(() => setNotif(null), 2200); }, []);
-  const handleLogin = (u) => { setUser(u); sessionStorage.setItem('sandok_user', JSON.stringify(u)); };
-  const handleLogout = () => { setUser(null); sessionStorage.removeItem('sandok_user'); setTicket([]); };
+  const handleLogin = (u) => { setUser(u); sessionStorage.setItem('kono_user', JSON.stringify(u)); };
+  const handleLogout = () => { setUser(null); sessionStorage.removeItem('kono_user'); setTicket([]); };
 
   const addItem = (p) => {
     setTicket(prev => { const ex = prev.find(i => i.id === p.id); return ex ? prev.map(i => i.id === p.id ? { ...i, qty: i.qty + 1 } : i) : [...prev, { ...p, qty: 1 }]; });
@@ -296,12 +296,11 @@ export default function App() {
   if (!user) return <Login onLogin={handleLogin} />;
   if (loading) return (
     <div style={{ background: '#111', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', alignItems: 'baseline' }}>
-        <span style={{ fontSize: 40, fontWeight: 300, color: '#fff' }}>Sand</span>
-        <span style={{ fontSize: 28, color: '#CC0000' }}>●</span>
-        <span style={{ fontSize: 40, fontWeight: 900, color: '#fff' }}>K</span>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 0 }}>
+        <span style={{ fontSize: 40, fontWeight: 900, color: '#FFB800', letterSpacing: '-0.03em', lineHeight: 1 }}>kono</span>
+        <span style={{ display: 'inline-block', width: 11, height: 11, borderRadius: '50%', background: '#E83030', marginLeft: 3, marginBottom: 5 }} />
       </div>
-      <div style={{ color: B.mustard, fontSize: 14 }}>Cargando...</div>
+      <div style={{ color: '#FFB800', fontSize: 14 }}>Cargando...</div>
     </div>
   );
 
@@ -314,10 +313,9 @@ export default function App() {
   ) : null;
 
   const logoBar = (
-    <div style={{ display: 'flex', alignItems: 'baseline' }}>
-      <span style={{ fontSize: isMobile ? 22 : 26, fontWeight: 300, color: B.white }}>Sand</span>
-      <span style={{ fontSize: isMobile ? 15 : 18, color: B.red, margin: '0 1px' }}>●</span>
-      <span style={{ fontSize: isMobile ? 22 : 26, fontWeight: 900, color: B.white, letterSpacing: -1 }}>K</span>
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 0 }}>
+      <span style={{ fontSize: isMobile ? 22 : 26, fontWeight: 900, color: '#FFB800', letterSpacing: '-0.03em', lineHeight: 1 }}>kono</span>
+      <span style={{ display: 'inline-block', width: isMobile ? 7 : 8, height: isMobile ? 7 : 8, borderRadius: '50%', background: '#E83030', marginLeft: 2, marginBottom: isMobile ? 3 : 4, flexShrink: 0 }} />
     </div>
   );
 
@@ -510,7 +508,7 @@ export default function App() {
 
   // ── RENDER ────────────────────────────────────────────────────────────────────
   const rootStyle = { minHeight: '100vh', background: B.offBlack, color: B.white, fontFamily: "'DM Sans','Helvetica Neue',sans-serif", display: 'flex', flexDirection: 'column' };
-  const headerStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '0 14px' : '0 20px', height: isMobile ? 54 : 62, background: B.black, borderBottom: `3px solid ${B.mustard}`, flexShrink: 0 };
+  const headerStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '0 14px' : '0 20px', height: isMobile ? 54 : 62, background: B.black, borderBottom: '3px solid #FFB800', flexShrink: 0 };
 
   if (isMobile) {
     return (
