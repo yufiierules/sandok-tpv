@@ -159,7 +159,7 @@ function ManageView({ products, categories, setCategories, setProducts, isMobile
   };
 
   return (
-    <div style={{ flex: 1, padding: isMobile ? '16px 16px 100px' : 24, overflowY: 'auto' }}>
+    <div style={{ flex: 1, padding: isMobile ? '16px 16px 100px' : 24, overflowY: 'auto', height: 0 }}>
       {notif && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', padding: '10px 24px', borderRadius: 50, fontWeight: 800, fontSize: 13, zIndex: 9999, background: notif.type === 'err' ? B.red : notif.type === 'warn' ? B.mustardDark : B.mustard, color: B.black, whiteSpace: 'nowrap' }}>{notif.msg}</div>}
 
       {/* Categorías */}
@@ -452,7 +452,7 @@ export default function App() {
 
   // ── History content ───────────────────────────────────────────────────────────
   const HistoryContent = () => (
-    <div style={{ flex: 1, padding: isMobile ? '16px 16px 100px' : 24, overflowY: 'auto' }}>
+    <div style={{ flex: 1, padding: isMobile ? '16px 16px 100px' : 24, overflowY: 'auto', height: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <h2 style={{ fontSize: 20, fontWeight: 900, margin: 0 }}>Hoy</h2>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -509,7 +509,7 @@ export default function App() {
   ];
 
   // ── RENDER ────────────────────────────────────────────────────────────────────
-  const rootStyle = { minHeight: '100vh', background: B.offBlack, color: B.white, fontFamily: "'DM Sans','Helvetica Neue',sans-serif", display: 'flex', flexDirection: 'column' };
+  const rootStyle = { height: '100vh', maxHeight: '100vh', background: B.offBlack, color: B.white, fontFamily: "'DM Sans','Helvetica Neue',sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'fixed', inset: 0 };
   const headerStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '0 14px' : '0 20px', height: isMobile ? 54 : 62, background: B.black, borderBottom: '3px solid #FFB800', flexShrink: 0 };
 
   if (isMobile) {
@@ -582,7 +582,7 @@ export default function App() {
           </div>
         </div>
       )}
-      {desktopView === 'checkout' && <div style={{ flex: 1, overflowY: 'auto', display: 'flex', justifyContent: 'center' }}><CheckoutContent /></div>}
+      {desktopView === 'checkout' && <div style={{ flex: 1, overflowY: 'auto', display: 'flex', justifyContent: 'center', height: 0 }}><CheckoutContent /></div>}
       {desktopView === 'scanner' && <Scanner onAddToTicket={(p) => { addItem(p); setDesktopView('pos'); }} />}
       {desktopView === 'history' && <HistoryContent />}
       {desktopView === 'cuentas' && user.role === 'admin' && <Gastos sales={sales} />}
