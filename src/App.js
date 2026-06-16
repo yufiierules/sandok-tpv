@@ -3,7 +3,6 @@ import { supabase } from './supabase';
 import Login from './Login';
 import Ticket from './Ticket';
 import Gastos from './Gastos';
-import Scanner from './Scanner';
 import Usuarios from './Usuarios';
 import Categorias from './Categorias';
 
@@ -223,6 +222,7 @@ export default function App() {
   const [time, setTime] = useState(nowStr());
   const [printSale, setPrintSale] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [discount, setDiscount] = useState(0); // porcentaje 0-100
 
   useEffect(() => { const saved = sessionStorage.getItem('kono_user'); if (saved) setUser(JSON.parse(saved)); }, []);
   useEffect(() => { const t = setInterval(() => setTime(nowStr()), 30000); return () => clearInterval(t); }, []);
@@ -264,9 +264,11 @@ export default function App() {
     if (isMobile) notify(`+ ${p.name}`);
   };
   const chgQty = (id, d) => setTicket(prev => prev.map(i => i.id === id ? { ...i, qty: i.qty + d } : i).filter(i => i.qty > 0));
-  const clear = () => { setTicket([]); if (isMobile) setView('catalog'); };
+  const clear = () => { setTicket([]); setDiscount(0); if (isMobile) setView('catalog'); };
 
-  const total = ticket.reduce((s, i) => s + Number(i.price) * i.qty, 0);
+  const subtotal = ticket.reduce((s, i) => s + Number(i.price) * i.qty, 0);
+  const discountAmt = Math.round(subtotal * discount) / 100;
+  const total = Math.round((subtotal - discountAmt) * 100) / 100;
   const cashNum = parseFloat(cash.replace(',', '.')) || 0;
   const change = cashNum - total;
   const count = ticket.reduce((s, i) => s + i.qty, 0);
@@ -277,14 +279,14 @@ export default function App() {
     const sale = {
       id: Date.now(), time: nowStr(), date: dateStr(),
       items: ticket.map(i => ({ name: i.name, qty: i.qty, price: Number(i.price) })),
-      total: Math.round(total * 100) / 100, method: payMethod,
+      total: Math.round(total * 100) / 100, discount_pct: discount, method: payMethod,
       change_amount: payMethod === 'Efectivo' ? Math.max(0, Math.round(change * 100) / 100) : 0,
       seller: user?.username || 'employee',
     };
     const { error } = await supabase.from('tpv_sales').insert([sale]);
     if (error) { notify('Error al guardar venta', 'err'); return; }
     setSales(prev => [sale, ...prev]);
-    clear(); setCash(''); setPayMethod('Efectivo');
+    clear(); setCash(''); setPayMethod('Efectivo'); setDiscount(0);
     if (isMobile) setView('catalog'); else setDesktopView('pos');
     notify(`✓ Cobrado ${fmt(total)}`);
     setPrintSale(sale);
@@ -381,13 +383,34 @@ export default function App() {
           </div>
         ))}
       </div>
-      <div className={isMobile ? 'cobrar-bar' : ''} style={isMobile ? {} : { padding: 16, borderTop: `2px solid ${B.mustard}`, flexShrink: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <span style={{ color: B.muted, fontSize: 13 }}>{count} artículo{count !== 1 ? 's' : ''}</span>
-          <span style={{ fontSize: 26, fontWeight: 900, letterSpacing: -1 }}>{fmt(total)}</span>
+      <div className={isMobile ? 'cobrar-bar' : ''} style={isMobile ? {} : { padding: '12px 16px', borderTop: `2px solid ${B.mustard}`, flexShrink: 0 }}>
+        {/* Descuento rápido */}
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+            <span style={{ fontSize: 10, color: B.mustard, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase' }}>Descuento</span>
+            {discount > 0 && <span style={{ fontSize: 11, color: '#8BC34A', fontWeight: 700 }}>−{fmt(discountAmt)}</span>}
+          </div>
+          <div style={{ display: 'flex', gap: 5 }}>
+            {[0, 5, 10, 15, 20, 25, 50].map(pct => (
+              <button key={pct} onClick={() => setDiscount(pct)}
+                style={{ flex: 1, background: discount === pct ? (pct === 0 ? B.mid : '#1a2e00'), border: `1px solid ${discount === pct ? (pct === 0 ? B.light : '#8BC34A') : B.mid}`, borderRadius: 7, color: discount === pct ? (pct === 0 ? B.white : '#8BC34A') : B.muted, fontSize: 11, fontWeight: 800, padding: '6px 0', cursor: 'pointer', fontFamily: 'inherit', touchAction: 'manipulation' }}>
+                {pct === 0 ? '✕' : `${pct}%`}
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* Total */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <span style={{ color: B.muted, fontSize: 13 }}>{count} art{count !== 1 ? 's' : ''}
+            {discount > 0 && <span style={{ color: '#8BC34A', marginLeft: 6 }}>−{discount}%</span>}
+          </span>
+          <div style={{ textAlign: 'right' }}>
+            {discount > 0 && <div style={{ fontSize: 11, color: B.muted, textDecoration: 'line-through' }}>{fmt(subtotal)}</div>}
+            <span style={{ fontSize: 24, fontWeight: 900, letterSpacing: -1 }}>{fmt(total)}</span>
+          </div>
         </div>
         <button onClick={() => isMobile ? setView('checkout') : setDesktopView('checkout')} disabled={!ticket.length}
-          style={{ width: '100%', background: B.mustard, border: 'none', color: B.black, borderRadius: 12, padding: '15px 0', fontSize: 16, fontWeight: 900, cursor: ticket.length ? 'pointer' : 'default', opacity: ticket.length ? 1 : 0.35, fontFamily: 'inherit', touchAction: 'manipulation' }}>
+          style={{ width: '100%', background: B.mustard, border: 'none', color: B.black, borderRadius: 12, padding: '14px 0', fontSize: 16, fontWeight: 900, cursor: ticket.length ? 'pointer' : 'default', opacity: ticket.length ? 1 : 0.35, fontFamily: 'inherit', touchAction: 'manipulation' }}>
           Cobrar {fmt(total)}
         </button>
       </div>
@@ -411,6 +434,12 @@ export default function App() {
             <span style={{ color: B.mustard, fontWeight: 700 }}>{fmt(Number(i.price) * i.qty)}</span>
           </div>
         ))}
+        {discount > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${B.dark}`, fontSize: 13 }}>
+            <span style={{ color: '#8BC34A' }}>Descuento {discount}%</span>
+            <span style={{ color: '#8BC34A', fontWeight: 700 }}>−{fmt(discountAmt)}</span>
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, paddingTop: 8, borderTop: `2px solid ${B.mustard}` }}>
           <span style={{ fontWeight: 900, fontSize: 16 }}>TOTAL</span>
           <span style={{ fontWeight: 900, fontSize: 20, color: B.mustard }}>{fmt(total)}</span>
@@ -491,7 +520,6 @@ export default function App() {
 
   const desktopNavItems = [
     { id: 'pos', label: '🏠 Venta' },
-    { id: 'scanner', label: '📷 Escáner' },
     { id: 'history', label: `📋 Historial${todaySales.length > 0 ? ` (${todaySales.length})` : ''}` },
     ...adminNavDesktop,
   ];
@@ -499,7 +527,6 @@ export default function App() {
   const mobileTabItems = [
     { id: 'catalog', icon: '🏠', label: 'Venta' },
     { id: 'ticket', icon: '🧾', label: count > 0 ? `(${count})` : 'Ticket' },
-    { id: 'scanner', icon: '📷', label: 'Escáner' },
     { id: 'history', icon: '📋', label: 'Historial' },
     ...(user.role === 'admin' ? [
       { id: 'cuentas', icon: '💰', label: 'Cuentas' },
@@ -509,7 +536,7 @@ export default function App() {
   ];
 
   // ── RENDER ────────────────────────────────────────────────────────────────────
-  const rootStyle = { height: '100vh', maxHeight: '100vh', background: B.offBlack, color: B.white, fontFamily: "'DM Sans','Helvetica Neue',sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'fixed', inset: 0 };
+  const rootStyle = { height: '100dvh', background: B.offBlack, color: B.white, fontFamily: "'DM Sans','Helvetica Neue',sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 };
   const headerStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '0 14px' : '0 20px', height: isMobile ? 54 : 62, background: B.black, borderBottom: '3px solid #FFB800', flexShrink: 0 };
 
   if (isMobile) {
@@ -531,7 +558,6 @@ export default function App() {
           {view === 'ticket' && <TicketContent />}
           {view === 'checkout' && <CheckoutContent />}
           {view === 'history' && <HistoryContent />}
-          {view === 'scanner' && <Scanner onAddToTicket={(p) => { addItem(p); setView('ticket'); }} />}
           {view === 'cuentas' && user.role === 'admin' && <Gastos sales={sales} />}
           {view === 'manage' && user.role === 'admin' && <ManageView products={products} categories={categories} setCategories={setCategories} setProducts={setProducts} isMobile={isMobile} />}
           {view === 'usuarios' && user.role === 'admin' && <Usuarios currentUser={user} />}
@@ -583,7 +609,6 @@ export default function App() {
         </div>
       )}
       {desktopView === 'checkout' && <div style={{ flex: 1, overflowY: 'auto', display: 'flex', justifyContent: 'center', height: 0 }}><CheckoutContent /></div>}
-      {desktopView === 'scanner' && <Scanner onAddToTicket={(p) => { addItem(p); setDesktopView('pos'); }} />}
       {desktopView === 'history' && <HistoryContent />}
       {desktopView === 'cuentas' && user.role === 'admin' && <Gastos sales={sales} />}
       {desktopView === 'manage' && user.role === 'admin' && <ManageView products={products} categories={categories} setCategories={setCategories} setProducts={setProducts} isMobile={false} />}
