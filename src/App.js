@@ -499,6 +499,7 @@ export default function App() {
                 <span style={{ color: B.muted, fontSize: 13 }}>{sale.time}</span>
                 <span style={{ background: B.dark, borderRadius: 6, padding: '2px 8px', fontSize: 12, fontWeight: 700 }}>{PAYMENT_METHODS.find(m => m.id === sale.method)?.icon} {sale.method}</span>
                 {sale.seller && <span style={{ background: B.dark, borderRadius: 6, padding: '2px 8px', fontSize: 11, color: B.muted }}>👤 {sale.seller}</span>}
+                {Number(sale.discount_pct) > 0 && <span style={{ background: '#0F2200', border: '1px solid #4A8A00', borderRadius: 6, padding: '2px 8px', fontSize: 11, color: '#8BC34A', fontWeight: 700 }}>−{sale.discount_pct}%</span>}
                 <span style={{ marginLeft: 'auto', fontSize: 18, fontWeight: 900, color: B.mustard }}>{fmt(sale.total)}</span>
                 <button onClick={() => setPrintSale(sale)} style={{ background: B.mustard, border: 'none', borderRadius: 8, color: B.black, padding: '5px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 800, fontFamily: 'inherit' }}>🖨️</button>
               </div>
