@@ -393,12 +393,19 @@ export default function App() {
             {discount > 0 && <span style={{ fontSize: 11, color: '#8BC34A', fontWeight: 700 }}>−{fmt(discountAmt)}</span>}
           </div>
           <div style={{ display: 'flex', gap: 5 }}>
-            {[0, 5, 10, 15, 20, 25, 50].map(pct => (
-              <button key={pct} onClick={() => setDiscount(pct)}
-                style={{ flex: 1, background: discount === pct ? (pct === 0 ? B.mid : '#1a2e00'), border: `1px solid ${discount === pct ? (pct === 0 ? B.light : '#8BC34A') : B.mid}`, borderRadius: 7, color: discount === pct ? (pct === 0 ? B.white : '#8BC34A') : B.muted, fontSize: 11, fontWeight: 800, padding: '6px 0', cursor: 'pointer', fontFamily: 'inherit', touchAction: 'manipulation' }}>
-                {pct === 0 ? '✕' : `${pct}%`}
-              </button>
-            ))}
+            {[0, 5, 10, 15, 20, 25, 50].map(pct => {
+              const isActive = discount === pct;
+              const isZero = pct === 0;
+              const btnBg = isActive ? (isZero ? B.mid : '#1a2e00') : 'transparent';
+              const btnBorder = isActive ? (isZero ? B.light : '#8BC34A') : B.mid;
+              const btnColor = isActive ? (isZero ? B.white : '#8BC34A') : B.muted;
+              return (
+                <button key={pct} onClick={() => setDiscount(pct)}
+                  style={{ flex: 1, background: btnBg, border: '1px solid ' + btnBorder, borderRadius: 7, color: btnColor, fontSize: 11, fontWeight: 800, padding: '6px 0', cursor: 'pointer', fontFamily: 'inherit', touchAction: 'manipulation' }}>
+                  {isZero ? '✕' : pct + '%'}
+                </button>
+              );
+            })}
           </div>
         </div>
         {/* Total */}
