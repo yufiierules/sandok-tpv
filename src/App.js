@@ -23,12 +23,14 @@ const nowStr = () => new Date().toLocaleTimeString('es-ES', { hour: '2-digit', m
 const todayStr = () => new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
 const dateStr = () => new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+const MOBILE_BREAKPOINT = 1100; // cubre iPad en cualquier orientación
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BREAKPOINT);
   useEffect(() => {
-    const h = () => setIsMobile(window.innerWidth < 768);
+    const h = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     window.addEventListener('resize', h);
-    return () => window.removeEventListener('resize', h);
+    window.addEventListener('orientationchange', h);
+    return () => { window.removeEventListener('resize', h); window.removeEventListener('orientationchange', h); };
   }, []);
   return isMobile;
 }
@@ -337,7 +339,7 @@ export default function App() {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, overflowY: 'auto', flex: 1, paddingBottom: fullWidth ? 90 : 12, alignContent: 'flex-start' }}>
         {filtered.map(p => (
           <button key={p.id} onClick={() => addItem(p)}
-            style={{ background: B.dark, border: `1px solid ${B.mid}`, borderRadius: 14, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', color: B.white, fontFamily: 'inherit', touchAction: 'manipulation', width: 130, height: 150, flexShrink: 0, overflow: 'hidden', padding: 0 }}>
+            style={{ background: B.dark, border: `1px solid ${B.mid}`, borderRadius: 14, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', color: B.white, fontFamily: 'inherit', touchAction: 'manipulation', width: fullWidth ? 140 : 130, height: fullWidth ? 160 : 150, flexShrink: 0, overflow: 'hidden', padding: 0 }}>
             <div style={{ width: '100%', height: 85, background: B.mid, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '14px 14px 0 0' }}>
               {p.image_url ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 32 }}>🥪</span>}
             </div>
