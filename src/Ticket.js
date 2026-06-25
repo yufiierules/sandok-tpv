@@ -44,6 +44,9 @@ export default function Ticket({ sale, onClose }) {
 }
 
 function TicketBody({ sale }) {
+  const itemsSubtotal = sale.items.reduce((s, it) => s + Number(it.price) * it.qty, 0);
+  const discountPct = Number(sale.discount_pct) || 0;
+  const discountAmt = Math.round(itemsSubtotal * discountPct) / 100;
   const baseImponible = Number(sale.total) / (1 + NEGOCIO.iva / 100);
   const cuotaIva = Number(sale.total) - baseImponible;
   const numTicket = String(sale.id).slice(-8).toUpperCase();
@@ -116,6 +119,18 @@ function TicketBody({ sale }) {
 
       {/* ── TOTALES ── */}
       <div style={ts.totalSection}>
+        {discountPct > 0 && (
+          <>
+            <div style={ts.subRow}>
+              <span>Subtotal</span>
+              <span>{fmt(itemsSubtotal)}</span>
+            </div>
+            <div style={{ ...ts.subRow, color: '#1a8a1a', fontWeight: 700 }}>
+              <span>Descuento ({discountPct}%)</span>
+              <span>−{fmt(discountAmt)}</span>
+            </div>
+          </>
+        )}
         <div style={ts.totalRow}>
           <span style={ts.totalLabel}>TOTAL</span>
           <span style={ts.totalAmount}>{fmt(sale.total)}</span>
