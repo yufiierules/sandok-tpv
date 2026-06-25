@@ -333,7 +333,7 @@ export default function App() {
       <input style={{ background: B.dark, border: `1px solid ${B.mid}`, borderRadius: 10, padding: '11px 16px', color: B.white, fontSize: 15, outline: 'none', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box', marginBottom: 10 }} placeholder="🔍 Buscar..." value={search} onChange={e => setSearch(e.target.value)} />
       <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 10, scrollbarWidth: 'none' }}>
         {allCats.map(c => (
-          <button key={c} onClick={() => setCat(c)} style={{ background: cat === c ? B.mustard : B.dark, border: `1px solid ${cat === c ? B.mustard : B.mid}`, borderRadius: 20, padding: '7px 16px', color: cat === c ? B.black : B.muted, cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, touchAction: 'manipulation' }}>{c}</button>
+          <button key={c} onClick={(e) => { setCat(c); e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }} style={{ background: cat === c ? B.mustard : B.dark, border: `1px solid ${cat === c ? B.mustard : B.mid}`, borderRadius: 20, padding: '7px 16px', color: cat === c ? B.black : B.muted, cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, touchAction: 'manipulation' }}>{c}</button>
         ))}
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, overflowY: 'auto', flex: 1, paddingBottom: fullWidth ? 90 : 12, alignContent: 'flex-start' }}>
