@@ -286,7 +286,7 @@ export default function App() {
       seller: user?.username || 'employee',
     };
     const { error } = await supabase.from('tpv_sales').insert([sale]);
-    if (error) { notify('Error al guardar venta', 'err'); return; }
+    if (error) { console.error('Error guardando venta:', error); notify('Error: ' + (error.message || 'al guardar venta'), 'err'); return; }
     setSales(prev => [sale, ...prev]);
     clear(); setCash(''); setPayMethod('Efectivo'); setDiscount(0);
     if (isMobile) setView('catalog'); else setDesktopView('pos');
