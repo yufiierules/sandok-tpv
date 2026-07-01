@@ -92,6 +92,27 @@ export default function Gastos() {
     setGastos(prev => prev.filter(g => g.id !== id));
   };
 
+  const deleteSale = async (id) => {
+    if (!window.confirm('¿Eliminar esta venta? Esta acción no se puede deshacer.')) return;
+    const { error } = await supabase.from('tpv_sales').delete().eq('id', id);
+    if (!error) setSales(prev => prev.filter(s => s.id !== id));
+    else alert('Error al eliminar la venta');
+  };
+
+  const resetMonth = async () => {
+    const label = `${MESES[selMonth]} ${selYear}`;
+    if (!window.confirm(`¿Reiniciar todas las cuentas de ${label}?\n\nEsto eliminará TODAS las ventas y gastos de este mes de forma permanente.`)) return;
+    if (!window.confirm(`⚠️ Confirmación final: ¿seguro que quieres borrar todos los datos de ${label}?`)) return;
+    // Eliminar ventas del mes
+    const saleIds = sales.map(s => s.id);
+    if (saleIds.length > 0) await supabase.from('tpv_sales').delete().in('id', saleIds);
+    // Eliminar gastos del mes
+    const gastoIds = gastosDelMes.map(g => g.id);
+    if (gastoIds.length > 0) await supabase.from('tpv_gastos').delete().in('id', gastoIds);
+    setSales([]);
+    setGastos(prev => prev.filter(g => !gastoIds.includes(g.id)));
+  };
+
   const gastosDelMes = gastos.filter(g => inMonth(g.fecha, selYear, selMonth));
   const ventasPeriodo = sales.reduce((s, x) => s + Number(x.total), 0);
   const gastosPeriodo = gastosDelMes.reduce((s, x) => s + Number(x.importe), 0);
@@ -185,6 +206,14 @@ export default function Gastos() {
         ))}
       </div>
 
+      {/* Botón reiniciar mes */}
+      {!loading && (sales.length > 0 || gastosDelMes.length > 0) && (
+        <button onClick={resetMonth}
+          style={{ width: '100%', background: 'none', border: `1px solid ${B.red}`, color: B.red, borderRadius: 12, padding: '11px 0', cursor: 'pointer', fontWeight: 700, fontSize: 13, fontFamily: 'inherit', marginBottom: 16, opacity: 0.75 }}>
+          🗑️ Reiniciar cuentas de {MESES[selMonth]} {selYear}
+        </button>
+      )}
+
       {loading ? (
         <div style={{ color: B.muted, textAlign: 'center', padding: 40 }}>Cargando {MESES[selMonth]}...</div>
       ) : (
@@ -223,7 +252,10 @@ export default function Gastos() {
                             <span style={{ background: '#0F2200', border: '1px solid #4A8A00', borderRadius: 6, padding: '2px 8px', fontSize: 11, color: '#8BC34A', fontWeight: 700 }}>−{sale.discount_pct}%</span>
                           )}
                         </div>
-                        <span style={{ fontWeight: 900, color: B.mustard, fontSize: 16 }}>{fmt(sale.total)}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ fontWeight: 900, color: B.mustard, fontSize: 16 }}>{fmt(sale.total)}</span>
+                          <button onClick={() => deleteSale(sale.id)} style={{ background: 'none', border: 'none', color: B.muted, cursor: 'pointer', fontSize: 18, padding: 4, flexShrink: 0 }}>🗑️</button>
+                        </div>
                       </div>
                       <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                         {(sale.items || []).map((it, i) => (
