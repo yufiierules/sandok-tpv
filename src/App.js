@@ -568,7 +568,7 @@ export default function App() {
           {view === 'ticket' && <TicketContent />}
           {view === 'checkout' && <CheckoutContent />}
           {view === 'history' && <HistoryContent />}
-          {view === 'cuentas' && user.role === 'admin' && <Gastos sales={sales} />}
+          {view === 'cuentas' && user.role === 'admin' && <Gastos />}
           {view === 'manage' && user.role === 'admin' && <ManageView products={products} categories={categories} setCategories={setCategories} setProducts={setProducts} isMobile={isMobile} />}
           {view === 'usuarios' && user.role === 'admin' && <Usuarios currentUser={user} />}
         </div>
@@ -620,7 +620,7 @@ export default function App() {
       )}
       {desktopView === 'checkout' && <div style={{ flex: 1, overflowY: 'auto', display: 'flex', justifyContent: 'center', height: 0 }}><CheckoutContent /></div>}
       {desktopView === 'history' && <HistoryContent />}
-      {desktopView === 'cuentas' && user.role === 'admin' && <Gastos sales={sales} />}
+      {desktopView === 'cuentas' && user.role === 'admin' && <Gastos />}
       {desktopView === 'manage' && user.role === 'admin' && <ManageView products={products} categories={categories} setCategories={setCategories} setProducts={setProducts} isMobile={false} />}
       {desktopView === 'usuarios' && user.role === 'admin' && <Usuarios currentUser={user} />}
     </div>
